@@ -1,6 +1,7 @@
 // backend/controllers/taskController.js
 
 const Task = require("../models/Task");
+const User = require("../models/User");
 
 // Create a new task
 const createTask = async (req, res) => {
@@ -162,7 +163,7 @@ const acceptBid = async (req, res) => {
   }
 };
 
-// Mark a task as completed and allow the task creator to provide a review
+// Complete Task and Provide a Review
 const completeTask = async (req, res) => {
   const { id } = req.params;
   const { rating, comment } = req.body;
@@ -176,9 +177,7 @@ const completeTask = async (req, res) => {
 
     // Ensure the user is the one who posted the task
     if (task.user.toString() !== req.user.id) {
-      return res
-        .status(403)
-        .json({ msg: "Only the task poster can mark a task as completed" });
+      return res.status(403).json({ msg: "Only the task poster can mark a task as completed" });
     }
 
     // Check if task is already completed
@@ -193,7 +192,21 @@ const completeTask = async (req, res) => {
       comment,
     };
 
-    await task.save();
+    // Find the provider of the task
+    const provider = await User.findById(task.assignedProvider);
+    if (!provider) {
+      return res.status(404).json({ msg: "Assigned provider not found" });
+    }
+
+    // Update the provider's average rating and total reviews
+    provider.totalReviews += 1;
+    provider.averageRating = (
+      (provider.averageRating * (provider.totalReviews - 1) + rating) / provider.totalReviews
+    ).toFixed(1);  // Recalculate average rating
+
+    await provider.save();  // Save updated provider info
+
+    await task.save();  // Save the task with updated status and review
 
     res.json({ msg: "Task marked as completed and review added", task });
   } catch (err) {
