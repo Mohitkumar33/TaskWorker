@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["user", "provider", "admin"], default: "user" },
+    averageRating: { type: Number, default: 0 }, // Average rating for providers
+    totalReviews: { type: Number, default: 0 } // Number of received reviews
   },
   { timestamps: true }
 );

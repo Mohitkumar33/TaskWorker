@@ -12,6 +12,8 @@ const {
   updateTaskStatus,
   deleteTask,
   bidOnTask,
+  acceptBid,
+  completeTask
 } = require("../controllers/taskController");
 
 const router = express.Router();
@@ -35,5 +37,11 @@ router.delete(
 
 // Routes for bidding on tasks
 router.post("/:id/bid", authMiddleware, authorizeRoles("provider"), bidOnTask); // Only providers can bid
+
+// Route for accepting a bid and assigning the provider
+router.put("/:id/acceptBid/:bidId", authMiddleware, authorizeRoles("user"), acceptBid); // Only task creators can accept a bid
+
+// Route for marking task as completed and providing a review
+router.put("/:id/completeTask", authMiddleware, authorizeRoles("user"), completeTask); // Only task creators can complete task
 
 module.exports = router;

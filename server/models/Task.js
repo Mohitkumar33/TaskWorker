@@ -22,8 +22,8 @@ const TaskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "completed", "cancelled"],
-      default: "active",
+      enum: ["Active", "In Progress", "Completed", "Cancelled"], 
+      default: "Active",
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -44,6 +44,11 @@ const TaskSchema = new mongoose.Schema(
         },
       },
     ],
+    assignedProvider: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    review: {
+        rating: { type: Number, min: 1, max: 5 },
+        comment: { type: String }
+      }
   },
   { timestamps: true }
 );
