@@ -16,3 +16,7 @@ test : everything related to testing
 
 chore: updating build tasks, package manager configs, etc
 
+### Mongodb installation
+
+Follow the steps in the below link
+https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/
