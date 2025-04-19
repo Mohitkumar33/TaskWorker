@@ -6,7 +6,17 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["user", "provider", "admin"], default: "user" },
+    role: {
+      type: String,
+      enum: ["user", "provider", "admin"],
+      default: "user",
+    },
+    profilePhoto: { type: String },
+    location: { type: String },
+    skills: [{ type: String }], // Only applicable for providers
+    isVerified: { type: Boolean, default: false },
+    // For Google login
+    googleId: { type: String },
     averageRating: { type: Number, default: 0 }, // Average rating for providers
     totalReviews: { type: Number, default: 0 } // Number of received reviews
   },
