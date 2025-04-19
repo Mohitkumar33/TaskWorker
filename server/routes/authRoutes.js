@@ -39,16 +39,6 @@ router.post(
 
       const profilePhoto = req.file?.path || "";
 
-      // If role is provider but no skills are provided
-      // if (
-      //   role === "provider" &&
-      //   (!skills || !Array.isArray(skills) || skills.length === 0)
-      // ) {
-      //   return res
-      //     .status(400)
-      //     .json({ msg: "Providers must have at least one skill" });
-      // }
-
       user = new User({
         name,
         email,
