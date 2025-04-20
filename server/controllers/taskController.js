@@ -2,6 +2,12 @@
 
 const Task = require("../models/Task");
 const User = require("../models/User");
+const {
+  sendTaskCreationEmail,
+  sendBidNotificationEmail,
+  sendBidAcceptedEmail,
+  sendTaskCompletionEmail,
+} = require("../utils/mail");
 
 // Create a new task
 const createTask = async (req, res) => {
@@ -19,6 +25,7 @@ const createTask = async (req, res) => {
       category,
     });
     const savedTask = await newTask.save();
+    // sendTaskCreationEmail(req.user.email, req.user.name, savedTask.title); // Send email notification to the user
     res.status(201).json(savedTask);
   } catch (error) {
     console.error(error.message);
@@ -108,7 +115,7 @@ const bidOnTask = async (req, res) => {
   const { price, estimatedTime } = req.body;
 
   try {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id).populate("user", "email");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -121,6 +128,7 @@ const bidOnTask = async (req, res) => {
     });
 
     await task.save();
+    // sendBidNotificationEmail(task.user.email, task.title, req.user.name); // Send email notification to the task poster
     res.json(task);
   } catch (error) {
     console.error(error.message);
@@ -134,7 +142,7 @@ const acceptBid = async (req, res) => {
 
   try {
     // Find the task by ID
-    const task = await Task.findById(id);
+    const task = await Task.findById(id).populate("bids.provider", "email");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -157,6 +165,10 @@ const acceptBid = async (req, res) => {
     task.status = "In Progress";
 
     await task.save();
+    // sendBidAcceptedEmail(
+    //   bid.provider.email,
+    //   task.title
+    // ); // Send email notification to the provider
 
     res.json({ msg: "Bid accepted", task });
   } catch (err) {
@@ -212,6 +224,10 @@ const completeTask = async (req, res) => {
     await provider.save(); // Save updated provider info
 
     await task.save(); // Save the task with updated status and review
+    // sendTaskCompletionEmail(
+    //   provider.email,
+    //   task.title
+    // ); // Send email notification to the provider
 
     res.json({ msg: "Task marked as completed and review added", task });
   } catch (err) {

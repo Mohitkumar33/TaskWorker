@@ -5,6 +5,7 @@ const { check, validationResult } = require("express-validator");
 const User = require("../models/User");
 const upload = require("../middlewares/upload");
 const { authMiddleware } = require("../middlewares/authMiddleware");
+const { sendRegistrationEmail } = require("../utils/mail");
 
 const router = express.Router();
 
@@ -30,8 +31,8 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { name, email, password, role, location, skills } =
-      req.body;
+    const { name, email, password, role, location, skills } = 
+    req.body;
 
     try {
       let user = await User.findOne({ email });
@@ -51,10 +52,11 @@ router.post(
       await user.save();
 
       const token = jwt.sign(
-        { id: user._id, role: user.role },
+        { id: user._id, role: user.role, email: user.email, name: user.name },
         process.env.JWT_SECRET,
         { expiresIn: "7d" }
       );
+      // sendRegistrationEmail(user.email, user.name);
 
       res.json({
         token,
