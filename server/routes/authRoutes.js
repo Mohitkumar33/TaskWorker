@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
 const User = require("../models/User");
 const upload = require("../middlewares/upload");
-
+const { authMiddleware } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -77,6 +77,22 @@ router.post(
     }
   }
 );
+
+// @route   GET /api/auth/profile/:id
+// @desc    Get user profile by ID
+// @access  Private
+router.get("/profile/:id", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 
 // @route   POST /api/auth/login
 // @desc    Login user and return token
