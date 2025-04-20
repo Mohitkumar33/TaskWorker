@@ -44,7 +44,11 @@ const TaskSchema = new mongoose.Schema(
         },
       },
     ],
-    location: { type: String },
+    location: {
+      state: { type: String, required: true },
+      city: { type: String, required: true },
+      suburb: { type: String, required: true }
+    },
     assignedProvider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

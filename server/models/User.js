@@ -12,13 +12,17 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
     profilePhoto: { type: String },
-    location: { type: String },
+    location: {
+      state: { type: String, required: true },
+      city: { type: String, required: true },
+      suburb: { type: String, required: true },
+    },
     skills: [{ type: String }], // Only applicable for providers
     isVerified: { type: Boolean, default: false },
     // For Google login
     googleId: { type: String },
     averageRating: { type: Number, default: 0 }, // Average rating for providers
-    totalReviews: { type: Number, default: 0 } // Number of received reviews
+    totalReviews: { type: Number, default: 0 }, // Number of received reviews
   },
   { timestamps: true }
 );
