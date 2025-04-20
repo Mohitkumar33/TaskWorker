@@ -5,8 +5,8 @@ const User = require("../models/User");
 
 // Create a new task
 const createTask = async (req, res) => {
-  const { title, description, budget, deadline } = req.body;
-
+  const { title, description, budget, deadline, location } = req.body;
+  const imageUrls = req.files.map((file) => file.path); // Cloudinary returns .path as URL
   try {
     const newTask = new Task({
       title,
@@ -14,8 +14,9 @@ const createTask = async (req, res) => {
       budget,
       deadline,
       user: req.user.id, // Set the logged-in user who is posting the task
+      location,
+      images: imageUrls, // save image urls
     });
-
     const savedTask = await newTask.save();
     res.status(201).json(savedTask);
   } catch (error) {
@@ -177,7 +178,9 @@ const completeTask = async (req, res) => {
 
     // Ensure the user is the one who posted the task
     if (task.user.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "Only the task poster can mark a task as completed" });
+      return res
+        .status(403)
+        .json({ msg: "Only the task poster can mark a task as completed" });
     }
 
     // Check if task is already completed
@@ -201,12 +204,13 @@ const completeTask = async (req, res) => {
     // Update the provider's average rating and total reviews
     provider.totalReviews += 1;
     provider.averageRating = (
-      (provider.averageRating * (provider.totalReviews - 1) + rating) / provider.totalReviews
-    ).toFixed(1);  // Recalculate average rating
+      (provider.averageRating * (provider.totalReviews - 1) + rating) /
+      provider.totalReviews
+    ).toFixed(1); // Recalculate average rating
 
-    await provider.save();  // Save updated provider info
+    await provider.save(); // Save updated provider info
 
-    await task.save();  // Save the task with updated status and review
+    await task.save(); // Save the task with updated status and review
 
     res.json({ msg: "Task marked as completed and review added", task });
   } catch (err) {
