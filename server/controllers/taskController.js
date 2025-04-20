@@ -5,7 +5,7 @@ const User = require("../models/User");
 
 // Create a new task
 const createTask = async (req, res) => {
-  const { title, description, budget, deadline, location } = req.body;
+  const { title, description, budget, deadline, location, category } = req.body;
   const imageUrls = req.files.map((file) => file.path); // Cloudinary returns .path as URL
   try {
     const newTask = new Task({
@@ -16,6 +16,7 @@ const createTask = async (req, res) => {
       user: req.user.id, // Set the logged-in user who is posting the task
       location,
       images: imageUrls, // save image urls
+      category,
     });
     const savedTask = await newTask.save();
     res.status(201).json(savedTask);

@@ -55,6 +55,22 @@ const TaskSchema = new mongoose.Schema(
       comment: { type: String },
     },
     images: [{ type: String }],
+    category: {
+      type: String,
+      enum: [
+        "Cleaning",
+        "Plumbing",
+        "Electrical",
+        "Handyman",
+        "Moving",
+        "Delivery",
+        "Gardening",
+        "Tutoring",
+        "Tech Support",
+        "Other",
+      ],
+      required: true,
+    },
   },
   { timestamps: true }
 );
