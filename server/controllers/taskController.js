@@ -11,8 +11,14 @@ const {
 
 // Create a new task
 const createTask = async (req, res) => {
-  const { title, description, budget, deadline, location, category } = req.body;
+  const { title, description, budget, deadline, category } = req.body;
+  const location = {
+    state: req.body["location.state"],
+    city: req.body["location.city"],
+    suburb: req.body["location.suburb"]
+  };
   const imageUrls = req.files.map((file) => file.path); // Cloudinary returns .path as URL
+  console.log(req.body);
   try {
     const newTask = new Task({
       title,

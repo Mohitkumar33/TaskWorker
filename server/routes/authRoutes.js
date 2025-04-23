@@ -31,8 +31,12 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { name, email, password, role, location, skills } = 
-    req.body;
+    const { name, email, password, role, skills } = req.body;
+    const location = {
+      state: req.body["location.state"],
+      city: req.body["location.city"],
+      suburb: req.body["location.suburb"],
+    };
 
     try {
       let user = await User.findOne({ email });
@@ -148,8 +152,6 @@ router.put(
     }
   }
 );
-
-
 
 // @route   POST /api/auth/login
 // @desc    Login user and return token
