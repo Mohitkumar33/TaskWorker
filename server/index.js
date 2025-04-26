@@ -20,7 +20,7 @@ app.use("/api/locations", locationRoutes); // Use location routes for Australian
 app.use("/api/auth", authRoutes); // Use auth routes for login, register, etc.
 app.use("/api/tasks", taskRoutes); // Use task routes for task management
 
-const port = 3300;
+const port = 8001;
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
