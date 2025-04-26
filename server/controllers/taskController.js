@@ -8,6 +8,7 @@ const {
   sendBidAcceptedEmail,
   sendTaskCompletionEmail,
 } = require("../utils/mail");
+const Message = require("../models/Message");
 
 // Create a new task
 const createTask = async (req, res) => {
@@ -175,6 +176,14 @@ const acceptBid = async (req, res) => {
     //   bid.provider.email,
     //   task.title
     // ); // Send email notification to the provider
+
+     await Message.create({
+      taskId: task._id,
+      sender: req.user.id, // Task owner
+      receiver: bid.provider, // Assigned provider
+      text: "Chat started. You can now communicate with the service provider.",
+      isSystem: true,
+    });
 
     res.json({ msg: "Bid accepted", task });
   } catch (err) {
