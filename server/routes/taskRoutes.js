@@ -14,6 +14,7 @@ const {
   bidOnTask,
   acceptBid,
   completeTask,
+  updateTaskDetails,
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 
@@ -60,5 +61,13 @@ router.put(
   authorizeRoles("user"),
   completeTask
 ); // Only task creators can complete task
+
+router.put(
+  "/:id",
+  authMiddleware,
+  authorizeRoles("user"),
+  taskUpload.array("images", 5),
+  updateTaskDetails
+);
 
 module.exports = router;
