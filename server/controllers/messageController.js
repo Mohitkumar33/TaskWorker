@@ -1,4 +1,5 @@
 const Message = require("../models/Message");
+const mongoose = require('mongoose');
 
 const createMessage = async (req, res) => {
   const { text, receiverId } = req.body;
@@ -50,4 +51,88 @@ const getMessages = async (req, res) => {
   }
 };
 
-module.exports = { createMessage, getMessages };
+const getChatSummary = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const chats = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender: new mongoose.Types.ObjectId(userId) },
+            { receiver: new mongoose.Types.ObjectId(userId) }
+          ]
+        }
+      },
+      {
+        $sort: { timestamp: -1 }
+      },
+      {
+        $group: {
+          _id: "$taskId",
+          lastMessage: { $first: "$text" },
+          lastImage: { $first: "$image" },
+          lastTimestamp: { $first: "$timestamp" },
+          sender: { $first: "$sender" },
+          receiver: { $first: "$receiver" },
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "receiver",
+          foreignField: "_id",
+          as: "receiverInfo"
+        }
+      },
+      {
+        $unwind: { path: "$receiverInfo", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "sender",
+          foreignField: "_id",
+          as: "senderInfo"
+        }
+      },
+      {
+        $unwind: { path: "$senderInfo", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $addFields: {
+          chatPartner: {
+            $cond: [
+              { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
+              "$receiverInfo",
+              "$senderInfo"
+            ]
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          taskId: "$_id",
+          lastMessage: 1,
+          lastImage: 1,
+          lastTimestamp: 1,
+          partnerName: "$chatPartner.name",
+          partnerProfilePhoto: "$chatPartner.profilePhoto"
+        }
+      },
+      {
+        $sort: { lastTimestamp: -1 }
+      }
+    ]);
+
+    res.json(chats);
+  } catch (err) {
+    console.error('❌ Error getting chat summary:', err);
+    res.status(500).send("Server Error");
+  }
+};
+
+module.exports = { createMessage, getMessages, getChatSummary };
+
+
