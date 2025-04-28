@@ -15,6 +15,7 @@ const createMessage = async (req, res) => {
       receiver: receiverId,
       text: text || '[Image]',
       image: req.file?.path || null,
+      read: false,
     });
     console.log("Message created:", message);
 
@@ -97,6 +98,15 @@ const getChatSummary = async (req, res) => {
 
       const partner = await User.findById(partnerId).select('name profilePhoto');
 
+      // Find unread messages count for this task
+      const unreadCount = await Message.countDocuments({
+        taskId: task._id,
+        receiver: userId,
+        sender: { $ne: userId },
+        read: false
+        
+      });
+
       return {
         taskId: task._id,
         taskTitle: task.title,
@@ -105,6 +115,7 @@ const getChatSummary = async (req, res) => {
         lastTimestamp: msg.lastTimestamp,
         partnerName: partner ? partner.name : "Unknown",
         partnerProfilePhoto: partner?.profilePhoto || null,
+        unreadCount: unreadCount || 0,
       };
     }));
 
@@ -122,6 +133,27 @@ const getChatSummary = async (req, res) => {
   }
 };
 
-module.exports = { createMessage, getMessages, getChatSummary };
+const markMessagesAsRead = async (req, res) => {
+  const { taskId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    await Message.updateMany(
+      {
+        taskId: taskId,
+        receiver: userId,
+        read: false,
+      },
+      { $set: { read: true } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Error marking messages as read:', error);
+    res.status(500).send('Server Error');
+  }
+};
+
+module.exports = { createMessage, getMessages, getChatSummary, markMessagesAsRead };
 
 

@@ -4,7 +4,8 @@ const express = require("express");
 const {
   createMessage,
   getMessages,
-  getChatSummary
+  getChatSummary,
+  markMessagesAsRead
 } = require("../controllers/messageController");
 const {
   authMiddleware,
@@ -31,6 +32,11 @@ router.get(
   getMessages
 );
 
+//Get summary chat
 router.get("/summary/:userId", authMiddleware, getChatSummary);
+
+//mark message as read
+router.put('/:taskId/read', authMiddleware, markMessagesAsRead);
+
 
 module.exports = router;
