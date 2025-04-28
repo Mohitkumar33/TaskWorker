@@ -32,7 +32,9 @@ app.get("/", (req, res) => {
 });
 
 // Init socket server
-initSocket(server);
+const io = initSocket(server);
+app.set('io', io); // <-- Attach io to Express app
+
 
 const PORT = process.env.PORT || 3300;
 server.listen(PORT, () => {
