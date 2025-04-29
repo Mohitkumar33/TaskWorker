@@ -45,10 +45,31 @@ const TaskSchema = new mongoose.Schema(
       },
     ],
     location: {
-      state: { type: String, required: true },
-      city: { type: String, required: true },
-      suburb: { type: String, required: true }
+      type: {
+        type: String,
+        enum: ['remote', 'physical'],
+        required: true,
+      },
+      address: {
+        type: String,
+        required: function () {
+          return this.type === 'physical'; // Only required if physical
+        },
+      },
+      lat: {
+        type: Number,
+        required: function () {
+          return this.type === 'physical';
+        },
+      },
+      lng: {
+        type: Number,
+        required: function () {
+          return this.type === 'physical';
+        },
+      },
     },
+    
     assignedProvider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

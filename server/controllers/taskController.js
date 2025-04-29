@@ -12,14 +12,23 @@ const Message = require("../models/Message");
 
 // Create a new task
 const createTask = async (req, res) => {
-  const { title, description, budget, deadline, category } = req.body;
-  const location = {
-    state: req.body["location.state"],
-    city: req.body["location.city"],
-    suburb: req.body["location.suburb"]
-  };
+  const { title, description, budget, deadline, category, location } = req.body;
+
+  // Validate required fields
+  if (!title || !description || !budget || !deadline || !category || !location) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  //check location type
+  if (location.type === 'physical') {
+    if (!location.address || location.lat == null || location.lng == null) {
+      return res.status(400).json({ message: "Physical location requires address, lat, and lng" });
+    }
+  }
+  
   const imageUrls = req.files.map((file) => file.path); // Cloudinary returns .path as URL
   console.log(req.body);
+  
   try {
     const newTask = new Task({
       title,
