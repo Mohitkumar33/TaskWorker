@@ -167,7 +167,7 @@ const bidOnTask = async (req, res) => {
         task.user.fcmToken,
         'New Offer Received',
         `${provider.name} has offered $${price} for your task.`,
-        { taskId: task._id.toString() }
+        { taskId: task._id.toString(), type: 'task' }
       );
     } else {
       console.warn("No FCM token found for user.");
@@ -216,7 +216,7 @@ const acceptBid = async (req, res) => {
         provider.fcmToken,
         "Offer Accepted!",
         `${task.user.name} has accepted your offer for the task. View task now!`,
-        { taskId: task._id.toString() }
+        { taskId: task._id.toString(), type: 'task' }
       );
     } else {
       console.warn("No FCM token found for accepted provider.");
@@ -301,6 +301,23 @@ const completeTask = async (req, res) => {
     await provider.save(); // Save updated provider info
 
     await task.save(); // Save the task with updated status and review
+    //push notification to task poster
+    if (task.user.fcmToken || provider.fcmToken) {
+      await sendNotification(
+        task.user.fcmToken,
+        'Task Completed!',
+        `Congratulations! ${task.title} has completed.`,
+        { taskId: task._id.toString(), type: 'task' }
+      );
+      await sendNotification(
+        provider.fcmToken,
+        'Task Completed!',
+        `Congratulations! ${task.title} has completed. You received ${task.rating} stars.`,
+        { taskId: task._id.toString(), type: 'task' }
+      );
+    } else {
+      console.warn("No FCM token found for user.");
+    }
     // sendTaskCompletionEmail(
     //   provider.email,
     //   task.title
@@ -327,6 +344,23 @@ const createComment = async (req, res) => {
 
     task.comments.push(newComment);
     await task.save();
+    
+    // Find the poster of the task
+    const poster = await User.findById(task.user);
+    if (!poster) {
+      return res.status(404).json({ msg: "Poster not found" });
+    }
+
+    if (poster.fcmToken) {
+      await sendNotification(
+        poster.fcmToken,
+        "New comment",
+        `${taqsk.comment.user} posted on your task.`,
+        { taskId: task._id.toString(), type: 'task' }
+      );
+    } else {
+      console.warn("No FCM token found for accepted provider.");
+    }
 
     res.status(201).json(task);
   } catch (err) {

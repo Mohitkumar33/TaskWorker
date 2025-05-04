@@ -2,6 +2,7 @@ const Message = require("../models/Message");
 const Task = require('../models/Task');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const sendNotification = require('../utils/sendnotification.js');
 
 const createMessage = async (req, res) => {
   const { text, receiverId } = req.body;
@@ -32,6 +33,19 @@ const createMessage = async (req, res) => {
       });
       console.log("📢 Emitted message to room:", taskId);
     }
+
+    //push notification
+    const receiver = User.findById(receiverId);
+    if (receiver.fcmToken) {
+          await sendNotification(
+            receiver.fcmToken,
+            `New message from ${message.sender}.`,
+            `${message.text}`,
+            { taskId: taskId.toString(), type: 'chat' }
+          );
+        } else {
+          console.warn("No FCM token found for receiver.");
+        }
 
     res.status(201).json(message);
   } catch (err) {
