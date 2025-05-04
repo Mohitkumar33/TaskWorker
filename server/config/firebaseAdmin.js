@@ -1,9 +1,15 @@
 // config/firebaseAdmin.js
-const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json'); // Download this from Firebase Console > Project Settings > Service accounts
+const admin = require("firebase-admin");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+let app;
+
+if (!admin.apps.length) {
+  const serviceAccount = require("./serviceAccountKey.json");
+  app = admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+} else {
+  app = admin.app(); // Use existing initialized app
+}
 
 module.exports = admin;
