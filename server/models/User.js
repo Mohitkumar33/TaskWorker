@@ -13,9 +13,9 @@ const UserSchema = new mongoose.Schema(
     },
     profilePhoto: { type: String },
     location: {
-      state: { type: String },
-      city: { type: String },
-      suburb: { type: String },
+      country: { type: String },           
+      lat: { type: Number },               
+      lng: { type: Number },
     },
     skills: [{ type: String }], // Only applicable for providers
     isVerified: { type: Boolean, default: false },
