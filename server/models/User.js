@@ -23,7 +23,15 @@ const UserSchema = new mongoose.Schema(
     googleId: { type: String },
     averageRating: { type: Number, default: 0 }, // Average rating for providers
     totalReviews: { type: Number, default: 0 }, // Number of received reviews
+    completedTasks: { type: Number, default: 0 },
+    recommendations: { type: Number, default: 0 },
+    rank: {
+      type: String,
+      enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+      default: 'Bronze',
+    },
   },
+  
   { timestamps: true }
 );
 
