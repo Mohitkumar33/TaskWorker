@@ -14,6 +14,8 @@ const {
   bidOnTask,
   acceptBid,
   completeTask,
+  createComment,
+  replyToComment
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 
@@ -60,5 +62,19 @@ router.put(
   authorizeRoles("user"),
   completeTask
 ); // Only task creators can complete task
+
+// POST Comment
+router.post(
+  "/:taskId/comment",
+  authMiddleware,
+  createComment
+);
+
+// POST Reply to a Comment
+router.post(
+  "/:taskId/comment/:commentId/reply",
+  authMiddleware,
+  replyToComment
+);
 
 module.exports = router;
