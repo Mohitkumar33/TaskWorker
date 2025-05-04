@@ -278,6 +278,11 @@ const completeTask = async (req, res) => {
       return res.status(404).json({ msg: "Assigned provider not found" });
     }
 
+    // Increment recommendations 
+    if (recommend) {
+      provider.recommendations = (provider.recommendations || 0) + 1;
+    }
+
     // Update the provider's average rating and total reviews
     provider.totalReviews += 1;
     provider.averageRating = Number (
@@ -299,8 +304,8 @@ const completeTask = async (req, res) => {
     });
 
     await provider.save(); // Save updated provider info
-
     await task.save(); // Save the task with updated status and review
+    
     //push notification to task poster
     if (task.user.fcmToken || provider.fcmToken) {
       await sendNotification(
