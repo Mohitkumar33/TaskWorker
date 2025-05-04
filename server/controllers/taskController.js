@@ -215,7 +215,7 @@ const acceptBid = async (req, res) => {
       await sendNotification(
         provider.fcmToken,
         "Offer Accepted!",
-        `${task.user.name} has accepted your offer for the task. View task now!`,
+        `${req.user.name} has accepted your offer for the task. View task now!`,
         { taskId: task._id.toString(), type: 'task' }
       );
     } else {
@@ -226,13 +226,13 @@ const acceptBid = async (req, res) => {
     //   task.title
     // ); // Send email notification to the provider
 
-     await Message.create({
-      taskId: task._id,
-      sender: req.user.id, // Task owner
-      receiver: bid.provider, // Assigned provider
-      text: "Chat started. You can now communicate with the service provider.",
-      isSystem: true,
-    });
+    //  await Message.create({
+    //   taskId: task._id,
+    //   sender: req.user.id, // Task owner
+    //   receiver: bid.provider, // Assigned provider
+    //   text: "Chat started. You can now communicate with the service provider.",
+    //   isSystem: true,
+    // });
 
     res.json({ msg: "Bid accepted", task });
   } catch (err) {
@@ -244,11 +244,11 @@ const acceptBid = async (req, res) => {
 // Complete Task and Provide a Review
 const completeTask = async (req, res) => {
   const { id } = req.params;
-  const { rating, comment } = req.body;
+  const { rating, comment, recommend  } = req.body;
 
   try {
     // Find the task by ID
-    const task = await Task.findById(id);
+    const task = await Task.findById(id).populate('assignedProvider');
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -273,7 +273,7 @@ const completeTask = async (req, res) => {
     };
 
     // Find the provider of the task
-    const provider = await User.findById(task.assignedProvider);
+    const provider = task.assignedProvider;
     if (!provider) {
       return res.status(404).json({ msg: "Assigned provider not found" });
     }
@@ -305,7 +305,7 @@ const completeTask = async (req, res) => {
 
     await provider.save(); // Save updated provider info
     await task.save(); // Save the task with updated status and review
-    
+
     //push notification to task poster
     if (task.user.fcmToken || provider.fcmToken) {
       await sendNotification(
@@ -330,7 +330,8 @@ const completeTask = async (req, res) => {
 
     res.json({ msg: "Task marked as completed and review added", task });
   } catch (err) {
-    console.error(err.message);
+    console.error('[completeTask] Error:', error);
+
     res.status(500).send("Server error");
   }
 };
@@ -350,6 +351,8 @@ const createComment = async (req, res) => {
     task.comments.push(newComment);
     await task.save();
     
+    // Get commenter name
+    const commenter = await User.findById(req.user.id);
     // Find the poster of the task
     const poster = await User.findById(task.user);
     if (!poster) {
@@ -360,14 +363,14 @@ const createComment = async (req, res) => {
       await sendNotification(
         poster.fcmToken,
         "New comment",
-        `${taqsk.comment.user} posted on your task.`,
+        `${commenter?.name ?? 'Someone'} commented on your task.`,
         { taskId: task._id.toString(), type: 'task' }
       );
     } else {
       console.warn("No FCM token found for accepted provider.");
     }
 
-    res.status(201).json(task);
+    res.status(201).json(newComment);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -392,7 +395,26 @@ const replyToComment = async (req, res) => {
     comment.replies.push(newReply);
     await task.save();
 
-    res.status(201).json(task);
+    const originalCommenter = await User.findById(comment.user);
+    if (originalCommenter?.fcmToken) {
+      await sendNotification(
+        originalCommenter.fcmToken,
+        "New reply",
+        `${req.user.name ?? 'Someone'} replied to your comment.`,
+        { taskId: task._id.toString(), type: 'reply' }
+      );
+    }
+
+    const reply = comment.replies[comment.replies.length - 1];
+    res.status(201).json({
+      ...reply.toObject(),
+      user: {
+        _id: req.user.id,
+        name: req.user.name,
+        profilePhoto: req.user.profilePhoto,
+      },
+    });
+    
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

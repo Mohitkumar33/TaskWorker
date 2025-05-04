@@ -35,11 +35,12 @@ const createMessage = async (req, res) => {
     }
 
     //push notification
-    const receiver = User.findById(receiverId);
-    if (receiver.fcmToken) {
+    const receiver = await User.findById(receiverId);
+    const sender = await User.findById(message.sender);
+    if (receiver?.fcmToken) {
           await sendNotification(
             receiver.fcmToken,
-            `New message from ${message.sender}.`,
+            `New message from ${sender.name}.`,
             `${message.text}`,
             { taskId: taskId.toString(), type: 'chat' }
           );
@@ -127,6 +128,7 @@ const getChatSummary = async (req, res) => {
         lastMessage: msg.lastMessage || '[Image]',
         lastImage: msg.lastImage || null,
         lastTimestamp: msg.lastTimestamp,
+        partnerId: partnerId,
         partnerName: partner ? partner.name : "Unknown",
         partnerProfilePhoto: partner?.profilePhoto || null,
         unreadCount: unreadCount || 0,
