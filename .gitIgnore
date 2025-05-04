@@ -2,3 +2,4 @@
 .env
 /test-chat
 /test-chat2
+server/config/serviceAccountKey.json
