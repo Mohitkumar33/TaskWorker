@@ -186,7 +186,7 @@ const acceptBid = async (req, res) => {
 
   try {
     // Find the task by ID
-    const task = await Task.findById(id).populate("bids.provider", "email");
+    const task = await Task.findById(id).populate("bids.provider", "email fcmToken");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -209,6 +209,18 @@ const acceptBid = async (req, res) => {
     task.status = "In Progress";
 
     await task.save();
+    // Send push notification to provider
+    const provider = bid.provider;
+    if (provider.fcmToken) {
+      await sendNotification(
+        provider.fcmToken,
+        "Offer Accepted!",
+        `${task.user.name} has accepted your offer for the task. View task now!`,
+        { taskId: task._id.toString() }
+      );
+    } else {
+      console.warn("No FCM token found for accepted provider.");
+    }
     // sendBidAcceptedEmail(
     //   bid.provider.email,
     //   task.title
