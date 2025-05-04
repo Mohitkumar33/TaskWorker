@@ -138,7 +138,7 @@ const deleteTask = async (req, res) => {
 
 // Bid on a task
 const bidOnTask = async (req, res) => {
-  const { price, estimatedTime } = req.body;
+  const { price, estimatedTime, comment } = req.body;
 
   try {
     const task = await Task.findById(req.params.id).populate("user", "email");
@@ -150,6 +150,7 @@ const bidOnTask = async (req, res) => {
     task.bids.push({
       provider: req.user.id,
       price,
+      comment: comment || '',
       estimatedTime,
     });
 

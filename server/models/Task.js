@@ -38,6 +38,10 @@ const TaskSchema = new mongoose.Schema(
         },
         price: Number,
         estimatedTime: { type: String, required: true },
+        comment: {
+          type: String,    
+          default: '',
+        },
         date: {
           type: Date,
           default: Date.now,
