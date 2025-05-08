@@ -2,6 +2,20 @@
 
 const mongoose = require("mongoose");
 
+const replySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  text: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+});
+
+const commentSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  text: { type: String, required: true },
+  date: { type: Date, default: Date.now },
+  replies: [replySchema], // ➡️ multiple replies inside each comment
+});
+
+
 const TaskSchema = new mongoose.Schema(
   {
     title: {
@@ -18,7 +32,7 @@ const TaskSchema = new mongoose.Schema(
     },
     deadline: {
       type: Date,
-      required: true,
+      required: false,
     },
     status: {
       type: String,
@@ -38,6 +52,10 @@ const TaskSchema = new mongoose.Schema(
         },
         price: Number,
         estimatedTime: { type: String, required: true },
+        comment: {
+          type: String,    
+          default: '',
+        },
         date: {
           type: Date,
           default: Date.now,
@@ -45,10 +63,31 @@ const TaskSchema = new mongoose.Schema(
       },
     ],
     location: {
-      state: { type: String, required: true },
-      city: { type: String, required: true },
-      suburb: { type: String, required: true }
+      type: {
+        type: String,
+        enum: ['remote', 'physical'],
+        required: true,
+      },
+      address: {
+        type: String,
+        required: function () {
+          return this.type === 'physical'; // Only required if physical
+        },
+      },
+      lat: {
+        type: Number,
+        required: function () {
+          return this.type === 'physical';
+        },
+      },
+      lng: {
+        type: Number,
+        required: function () {
+          return this.type === 'physical';
+        },
+      },
     },
+    
     assignedProvider: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -59,6 +98,7 @@ const TaskSchema = new mongoose.Schema(
       comment: { type: String },
     },
     images: [{ type: String }],
+    comments: [commentSchema],
     category: {
       type: String,
       enum: [

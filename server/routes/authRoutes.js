@@ -31,12 +31,8 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { name, email, password, role, skills } = req.body;
-    const location = {
-      state: req.body["location.state"],
-      city: req.body["location.city"],
-      suburb: req.body["location.suburb"],
-    };
+    const { name, email, password, role, skills, fcmToken } = req.body;
+
 
     try {
       let user = await User.findOne({ email });
@@ -50,8 +46,8 @@ router.post(
         password,
         role,
         profilePhoto,
-        location,
         skills: role === "provider" ? skills.split(",") : [],
+        fcmToken, // save FCM token
       });
       await user.save();
 
@@ -118,10 +114,17 @@ router.put(
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ msg: "User not found" });
 
-      const { name, location, skills } = req.body;
+      const { name, skills } = req.body;
+      const location = {
+        country: req.body['location.country'],
+        lat: req.body['location.lat'] ? parseFloat(req.body['location.lat']) : undefined,
+        lng: req.body['location.lng'] ? parseFloat(req.body['location.lng']) : undefined,
+      };
 
       if (name) user.name = name;
-      if (location) user.location = location;
+      if (location.country) {
+        user.location = location;
+      }
       if (skills && user.role === "provider") {
         user.skills = skills.split(",").map((s) => s.trim());
       }
@@ -167,7 +170,7 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { email, password } = req.body;
+    const { email, password, fcmToken  } = req.body;
 
     try {
       const user = await User.findOne({ email });
@@ -176,6 +179,13 @@ router.post(
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
+      // Update token if sent
+      console.log(user.fcmToken)
+      if (!user.fcmToken || user.fcmToken !== fcmToken) {
+        user.fcmToken = fcmToken;
+        await user.save();
+      }
+
       const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
@@ -183,7 +193,7 @@ router.post(
       );
       res.json({
         token,
-        user: { id: user._id, name: user.name, email, role: user.role },
+        user: { id: user._id, name: user.name, email, role: user.role, fcmToken: user.fcmToken },
       });
     } catch (err) {
       console.error(err.message);

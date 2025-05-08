@@ -13,9 +13,9 @@ const UserSchema = new mongoose.Schema(
     },
     profilePhoto: { type: String },
     location: {
-      state: { type: String },
-      city: { type: String },
-      suburb: { type: String },
+      country: { type: String },           
+      lat: { type: Number },               
+      lng: { type: Number },
     },
     skills: [{ type: String }], // Only applicable for providers
     isVerified: { type: Boolean, default: false },
@@ -23,6 +23,14 @@ const UserSchema = new mongoose.Schema(
     googleId: { type: String },
     averageRating: { type: Number, default: 0 }, // Average rating for providers
     totalReviews: { type: Number, default: 0 }, // Number of received reviews
+    completedTasks: { type: Number, default: 0 },
+    recommendations: { type: Number, default: 0 },
+    rank: {
+      type: String,
+      enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+      default: 'Bronze',
+    },
+    fcmToken: { type: String},
   },
   { timestamps: true }
 );
