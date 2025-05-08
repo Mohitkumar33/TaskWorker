@@ -15,6 +15,8 @@ const {
   acceptBid,
   completeTask,
   updateTaskDetails,
+  createComment,
+  replyToComment
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 
@@ -62,12 +64,50 @@ router.put(
   completeTask
 ); // Only task creators can complete task
 
+
 router.put(
   "/:id",
   authMiddleware,
   authorizeRoles("user"),
   taskUpload.array("images", 5),
   updateTaskDetails
+
+// GET /api/provider/:providerId
+// get review for provider
+router.get('/provider/:providerId', async (req, res) => {
+  try {
+    const tasks = await Task.find({
+      assignedProvider: req.params.providerId,
+      status: 'Completed',
+      review: { $exists: true }
+    })
+      .populate('user', 'name email profilePhoto location skills isVerified role averageRating totalReviews');
+
+    const reviews = tasks.map(task => ({
+      rating: task.review.rating,
+      comment: task.review.comment,
+      reviewer: task.user, // the task poster becomes the reviewer
+    }));
+
+    res.json(reviews);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Failed to fetch reviews' });
+  }
+});
+
+// POST Comment
+router.post(
+  "/:taskId/comment",
+  authMiddleware,
+  createComment
+);
+
+// POST Reply to a Comment
+router.post(
+  "/:taskId/comment/:commentId/reply",
+  authMiddleware,
+  replyToComment
 );
 
 module.exports = router;
