@@ -14,6 +14,7 @@ const {
   bidOnTask,
   acceptBid,
   completeTask,
+  updateTaskDetails,
   createComment,
   replyToComment
 } = require("../controllers/taskController");
@@ -62,6 +63,14 @@ router.put(
   authorizeRoles("user"),
   completeTask
 ); // Only task creators can complete task
+
+
+router.put(
+  "/:id",
+  authMiddleware,
+  authorizeRoles("user"),
+  taskUpload.array("images", 5),
+  updateTaskDetails
 
 // GET /api/provider/:providerId
 // get review for provider

@@ -66,6 +66,13 @@ const sendTaskCompletionEmail = async (to, taskTitle) => {
   return sendEmail(to, subject, html);
 };
 
+const sendTaskUpdatedEmail = async (to, taskTitle) => {
+  const subject = "Task Updated Successfully";
+  const html = `<p>Your task "<strong>${taskTitle}</strong>" has been updated successfully. Thank you for keeping it up to date!</p>`;
+  return sendEmail(to, subject, html);
+};
+
+
 // Export functions
 module.exports = {
   sendEmail,
@@ -74,4 +81,5 @@ module.exports = {
   sendBidNotificationEmail,
   sendBidAcceptedEmail,
   sendTaskCompletionEmail,
+  sendTaskUpdatedEmail
 };

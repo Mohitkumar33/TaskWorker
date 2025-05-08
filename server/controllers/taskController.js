@@ -7,6 +7,7 @@ const {
   sendBidNotificationEmail,
   sendBidAcceptedEmail,
   sendTaskCompletionEmail,
+  sendTaskUpdatedEmail,
 } = require("../utils/mail");
 const Message = require("../models/Message");
 const { calculateProviderRank } = require('../services/rankingService');
@@ -421,6 +422,50 @@ const replyToComment = async (req, res) => {
   }
 };
 
+const updateTaskDetails = async (req, res) => {
+  const { title, description, budget, deadline, category } = req.body;
+
+  const locationUpdate = {
+    state: req.body["location.state"],
+    city: req.body["location.city"],
+    suburb: req.body["location.suburb"],
+  };
+
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ msg: "Task not found" });
+    }
+
+    if (task.bids.length > 0) {
+      return res
+        .status(400)
+        .json({ msg: "Cannot update task after bids have been placed" });
+    }
+
+    // Only update fields that are provided
+    if (title) task.title = title;
+    if (description) task.description = description;
+    if (budget) task.budget = budget;
+    if (deadline) task.deadline = deadline;
+    if (category) task.category = category;
+
+    // Update location fields individually if provided
+    if (locationUpdate.state) task.location.state = locationUpdate.state;
+    if (locationUpdate.city) task.location.city = locationUpdate.city;
+    if (locationUpdate.suburb) task.location.suburb = locationUpdate.suburb;
+
+    await task.save();
+
+    //sendTaskUpdatedEmail(req.user.email, task.title);
+
+    res.json({ msg: "Task updated successfully", task });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Server error");
+  }
+};
+
 module.exports = {
   createTask,
   getTasks,
@@ -430,6 +475,7 @@ module.exports = {
   bidOnTask,
   acceptBid,
   completeTask,
+  updateTaskDetails,
   createComment,
   replyToComment
 };
