@@ -64,14 +64,14 @@ router.put(
   completeTask
 ); // Only task creators can complete task
 
-
+// Route for updating task details
 router.put(
   "/:id",
   authMiddleware,
   authorizeRoles("user"),
   taskUpload.array("images", 5),
   updateTaskDetails
-
+);
 // GET /api/provider/:providerId
 // get review for provider
 router.get('/provider/:providerId', async (req, res) => {
