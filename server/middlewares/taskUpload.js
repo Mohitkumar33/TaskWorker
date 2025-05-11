@@ -5,7 +5,7 @@ const cloudinary = require("../config/cloudinary");
 const taskStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "connectMyTask/task-photos", // Separate folder for tasks
+    folder: "connectMyTask/production/task-photos", // Separate folder for tasks
     allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
