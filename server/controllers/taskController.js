@@ -65,6 +65,16 @@ const createTask = async (req, res) => {
 // Get all tasks
 const getTasks = async (req, res) => {
   try {
+    const tasks = await Task.find().populate("user", "name email"); // Populate user details
+    res.json(tasks);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Server error");
+  }
+};
+
+const getTasksWeb = async (req, res) => {
+  try {
     const tasks = await Task.find().populate("user", "name email").populate('bids.provider', 'name email').populate('assignedProvider') ; // Populate user details
     res.json(tasks);
   } catch (error) {
@@ -490,4 +500,5 @@ module.exports = {
   updateTaskDetails,
   createComment,
   replyToComment
+  getTasksWeb
 };

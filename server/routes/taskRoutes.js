@@ -16,7 +16,8 @@ const {
   completeTask,
   updateTaskDetails,
   createComment,
-  replyToComment
+  replyToComment,
+  getTasksWeb
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 
@@ -31,6 +32,7 @@ router.post(
   createTask
 ); // Only users can create tasks
 router.get("/", authMiddleware, getTasks); // Get all tasks
+router.get("/alltasks/web", authMiddleware, getTasksWeb); // Get all tasks for web
 router.get("/:id", authMiddleware, getTask); // Get task by ID
 router.put(
   "/:id/status",
