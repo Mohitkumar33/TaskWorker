@@ -26,7 +26,6 @@ app.use("/api/auth", authRoutes); // Use auth routes for login, register, etc.
 app.use("/api/tasks", taskRoutes); // Use task routes for task management
 app.use("/api/messages", messageRoutes);
 
-
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -36,7 +35,7 @@ const io = initSocket(server);
 app.set('io', io); // <-- Attach io to Express app
 
 
-const PORT = process.env.PORT || 3300;
+const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
