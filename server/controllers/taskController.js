@@ -65,7 +65,7 @@ const createTask = async (req, res) => {
 // Get all tasks
 const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().populate("user", "name email"); // Populate user details
+    const tasks = await Task.find().populate("user", "name email").populate('bids.provider', 'name email').populate('assignedProvider') ; // Populate user details
     res.json(tasks);
   } catch (error) {
     console.error(error.message);
@@ -425,11 +425,14 @@ const replyToComment = async (req, res) => {
 const updateTaskDetails = async (req, res) => {
   const { title, description, budget, deadline, category } = req.body;
 
-  const locationUpdate = {
-    state: req.body["location.state"],
-    city: req.body["location.city"],
-    suburb: req.body["location.suburb"],
-  };
+  let location;
+  if (req.body.location) {
+    try {
+      location = JSON.parse(req.body.location); // parse location JSON string
+    } catch (err) {
+      return res.status(400).json({ msg: "Invalid location format" });
+    }
+  }
 
   try {
     const task = await Task.findById(req.params.id);
@@ -450,14 +453,22 @@ const updateTaskDetails = async (req, res) => {
     if (deadline) task.deadline = deadline;
     if (category) task.category = category;
 
-    // Update location fields individually if provided
-    if (locationUpdate.state) task.location.state = locationUpdate.state;
-    if (locationUpdate.city) task.location.city = locationUpdate.city;
-    if (locationUpdate.suburb) task.location.suburb = locationUpdate.suburb;
+    if (location) {
+      // Validate structure like in createTask if needed
+      if (location.type === "physical") {
+        if (!location.address || location.lat == null || location.lng == null) {
+          return res.status(400).json({ msg: "Invalid physical location" });
+        }
+      } else if (location.type !== "remote") {
+        return res.status(400).json({ msg: "Location type must be 'physical' or 'remote'" });
+      }
+
+      task.location = location;
+    }
 
     await task.save();
 
-    //sendTaskUpdatedEmail(req.user.email, task.title);
+    // sendTaskUpdatedEmail(req.user.email, task.title);
 
     res.json({ msg: "Task updated successfully", task });
   } catch (error) {
@@ -465,6 +476,7 @@ const updateTaskDetails = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+
 
 module.exports = {
   createTask,
