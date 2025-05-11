@@ -10,8 +10,8 @@ const {
   sendTaskUpdatedEmail,
 } = require("../utils/mail");
 const Message = require("../models/Message");
-const { calculateProviderRank } = require('../services/rankingService');
-const sendNotification = require('../utils/sendnotification.js');
+const { calculateProviderRank } = require("../services/rankingService");
+const sendNotification = require("../utils/sendnotification.js");
 
 // Create a new task
 const createTask = async (req, res) => {
@@ -27,17 +27,23 @@ const createTask = async (req, res) => {
     }
 
     // Validate required fields first
-    if (!title || !description || !budget  || !category || !location) {
+    if (!title || !description || !budget || !category || !location) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     // Validate location type
-    if (location.type === 'physical') {
+    if (location.type === "physical") {
       if (!location.address || location.lat == null || location.lng == null) {
-        return res.status(400).json({ message: "Physical location requires address, lat, and lng" });
+        return res
+          .status(400)
+          .json({
+            message: "Physical location requires address, lat, and lng",
+          });
       }
-    } else if (location.type !== 'remote') {
-      return res.status(400).json({ message: "Location type must be 'physical' or 'remote'" });
+    } else if (location.type !== "remote") {
+      return res
+        .status(400)
+        .json({ message: "Location type must be 'physical' or 'remote'" });
     }
 
     const imageUrls = req.files?.map((file) => file.path) || [];
@@ -48,8 +54,8 @@ const createTask = async (req, res) => {
       budget,
       ...(deadline && { deadline }),
       user: req.user.id, // Logged-in user
-      location,           // Save location object directly
-      images: imageUrls,   // Save image paths (from Cloudinary or wherever)
+      location, // Save location object directly
+      images: imageUrls, // Save image paths (from Cloudinary or wherever)
       category,
     });
 
@@ -75,7 +81,10 @@ const getTasks = async (req, res) => {
 
 const getTasksWeb = async (req, res) => {
   try {
-    const tasks = await Task.find().populate("user", "name email").populate('bids.provider', 'name email').populate('assignedProvider') ; // Populate user details
+    const tasks = await Task.find()
+      .populate("user", "name email")
+      .populate("bids.provider", "name email")
+      .populate("assignedProvider"); // Populate user details
     res.json(tasks);
   } catch (error) {
     console.error(error.message);
@@ -154,7 +163,10 @@ const bidOnTask = async (req, res) => {
   const { price, estimatedTime, comment } = req.body;
 
   try {
-    const task = await Task.findById(req.params.id).populate("user", "email fcmToken");
+    const task = await Task.findById(req.params.id).populate(
+      "user",
+      "email fcmToken"
+    );
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -167,7 +179,7 @@ const bidOnTask = async (req, res) => {
     task.bids.push({
       provider: req.user.id,
       price,
-      comment: comment || '',
+      comment: comment || "",
       estimatedTime,
     });
 
@@ -176,9 +188,9 @@ const bidOnTask = async (req, res) => {
     if (task.user.fcmToken) {
       await sendNotification(
         task.user.fcmToken,
-        'New Offer Received',
+        "New Offer Received",
         `${provider.name} has offered $${price} for your task.`,
-        { taskId: task._id.toString(), type: 'task' }
+        { taskId: task._id.toString(), type: "task" }
       );
     } else {
       console.warn("No FCM token found for user.");
@@ -197,7 +209,10 @@ const acceptBid = async (req, res) => {
 
   try {
     // Find the task by ID
-    const task = await Task.findById(id).populate("bids.provider", "email fcmToken");
+    const task = await Task.findById(id).populate(
+      "bids.provider",
+      "email fcmToken"
+    );
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -227,7 +242,7 @@ const acceptBid = async (req, res) => {
         provider.fcmToken,
         "Offer Accepted!",
         `${req.user.name} has accepted your offer for the task. View task now!`,
-        { taskId: task._id.toString(), type: 'task' }
+        { taskId: task._id.toString(), type: "task" }
       );
     } else {
       console.warn("No FCM token found for accepted provider.");
@@ -255,11 +270,11 @@ const acceptBid = async (req, res) => {
 // Complete Task and Provide a Review
 const completeTask = async (req, res) => {
   const { id } = req.params;
-  const { rating, comment, recommend  } = req.body;
+  const { rating, comment, recommend } = req.body;
 
   try {
     // Find the task by ID
-    const task = await Task.findById(id).populate('assignedProvider');
+    const task = await Task.findById(id).populate("assignedProvider");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -289,16 +304,16 @@ const completeTask = async (req, res) => {
       return res.status(404).json({ msg: "Assigned provider not found" });
     }
 
-    // Increment recommendations 
+    // Increment recommendations
     if (recommend) {
       provider.recommendations = (provider.recommendations || 0) + 1;
     }
 
     // Update the provider's average rating and total reviews
     provider.totalReviews += 1;
-    provider.averageRating = Number (
+    provider.averageRating = Number(
       (provider.averageRating * (provider.totalReviews - 1) + rating) /
-      provider.totalReviews
+        provider.totalReviews
     ).toFixed(1); // Recalculate average rating
 
     // Increment completed tasks
@@ -321,15 +336,15 @@ const completeTask = async (req, res) => {
     if (task.user.fcmToken || provider.fcmToken) {
       await sendNotification(
         task.user.fcmToken,
-        'Task Completed!',
+        "Task Completed!",
         `Congratulations! ${task.title} has completed.`,
-        { taskId: task._id.toString(), type: 'task' }
+        { taskId: task._id.toString(), type: "task" }
       );
       await sendNotification(
         provider.fcmToken,
-        'Task Completed!',
+        "Task Completed!",
         `Congratulations! ${task.title} has completed. You received ${task.rating} stars.`,
-        { taskId: task._id.toString(), type: 'task' }
+        { taskId: task._id.toString(), type: "task" }
       );
     } else {
       console.warn("No FCM token found for user.");
@@ -341,7 +356,7 @@ const completeTask = async (req, res) => {
 
     res.json({ msg: "Task marked as completed and review added", task });
   } catch (err) {
-    console.error('[completeTask] Error:', error);
+    console.error("[completeTask] Error:", error);
 
     res.status(500).send("Server error");
   }
@@ -361,7 +376,7 @@ const createComment = async (req, res) => {
 
     task.comments.push(newComment);
     await task.save();
-    
+
     // Get commenter name
     const commenter = await User.findById(req.user.id);
     // Find the poster of the task
@@ -374,8 +389,8 @@ const createComment = async (req, res) => {
       await sendNotification(
         poster.fcmToken,
         "New comment",
-        `${commenter?.name ?? 'Someone'} commented on your task.`,
-        { taskId: task._id.toString(), type: 'task' }
+        `${commenter?.name ?? "Someone"} commented on your task.`,
+        { taskId: task._id.toString(), type: "task" }
       );
     } else {
       console.warn("No FCM token found for accepted provider.");
@@ -411,8 +426,8 @@ const replyToComment = async (req, res) => {
       await sendNotification(
         originalCommenter.fcmToken,
         "New reply",
-        `${req.user.name ?? 'Someone'} replied to your comment.`,
-        { taskId: task._id.toString(), type: 'reply' }
+        `${req.user.name ?? "Someone"} replied to your comment.`,
+        { taskId: task._id.toString(), type: "reply" }
       );
     }
 
@@ -425,7 +440,6 @@ const replyToComment = async (req, res) => {
         profilePhoto: req.user.profilePhoto,
       },
     });
-    
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -470,7 +484,9 @@ const updateTaskDetails = async (req, res) => {
           return res.status(400).json({ msg: "Invalid physical location" });
         }
       } else if (location.type !== "remote") {
-        return res.status(400).json({ msg: "Location type must be 'physical' or 'remote'" });
+        return res
+          .status(400)
+          .json({ msg: "Location type must be 'physical' or 'remote'" });
       }
 
       task.location = location;
@@ -487,7 +503,6 @@ const updateTaskDetails = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createTask,
   getTasks,
@@ -499,6 +514,6 @@ module.exports = {
   completeTask,
   updateTaskDetails,
   createComment,
-  replyToComment
-  getTasksWeb
+  replyToComment,
+  getTasksWeb,
 };
