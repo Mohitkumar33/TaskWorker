@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const { initSocket } = require("./utils/socket");
 const messageRoutes = require("./routes/messageRoutes"); // <- you'll create this next
+const adminRoutes = require("./routes/adminRoutes"); // <- you'll create this next
 
 const app = express();
 const server = http.createServer(app);
@@ -25,6 +26,7 @@ app.use("/api/locations", locationRoutes); // Use location routes for Australian
 app.use("/api/auth", authRoutes); // Use auth routes for login, register, etc.
 app.use("/api/tasks", taskRoutes); // Use task routes for task management
 app.use("/api/messages", messageRoutes);
+app.use("/api/admin", adminRoutes); // Use admin routes for admin functionalities
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
