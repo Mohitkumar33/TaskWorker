@@ -46,7 +46,7 @@ router.post(
         password,
         role,
         profilePhoto,
-        skills: role === "provider" ? skills.split(",") : [],
+        skills: role === "provider" && skills ? skills.split(",") : [],
         fcmToken, // save FCM token
       });
       await user.save();
