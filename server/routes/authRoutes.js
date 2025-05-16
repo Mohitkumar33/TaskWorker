@@ -32,8 +32,9 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
 
     const { name, email, password, role, skills, fcmToken } = req.body;
-
-
+    let location;
+    location = JSON.parse(req.body.location);
+    console.log(location);
     try {
       let user = await User.findOne({ email });
       if (user) return res.status(400).json({ msg: "User already exists" });
@@ -45,6 +46,7 @@ router.post(
         email,
         password,
         role,
+        location,
         profilePhoto,
         skills: role === "provider" && skills ? skills.split(",") : [],
         fcmToken, // save FCM token
@@ -116,9 +118,13 @@ router.put(
 
       const { name, skills } = req.body;
       const location = {
-        country: req.body['location.country'],
-        lat: req.body['location.lat'] ? parseFloat(req.body['location.lat']) : undefined,
-        lng: req.body['location.lng'] ? parseFloat(req.body['location.lng']) : undefined,
+        country: req.body["location.country"],
+        lat: req.body["location.lat"]
+          ? parseFloat(req.body["location.lat"])
+          : undefined,
+        lng: req.body["location.lng"]
+          ? parseFloat(req.body["location.lng"])
+          : undefined,
       };
 
       if (name) user.name = name;
@@ -170,7 +176,7 @@ router.post(
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const { email, password, fcmToken  } = req.body;
+    const { email, password, fcmToken } = req.body;
 
     try {
       const user = await User.findOne({ email });
@@ -180,7 +186,7 @@ router.post(
       if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
       // Update token if sent
-      console.log(user.fcmToken)
+      console.log(user.fcmToken);
       if (!user.fcmToken || user.fcmToken !== fcmToken) {
         user.fcmToken = fcmToken;
         await user.save();
@@ -193,7 +199,13 @@ router.post(
       );
       res.json({
         token,
-        user: { id: user._id, name: user.name, email, role: user.role, fcmToken: user.fcmToken },
+        user: {
+          id: user._id,
+          name: user.name,
+          email,
+          role: user.role,
+          fcmToken: user.fcmToken,
+        },
       });
     } catch (err) {
       console.error(err.message);
