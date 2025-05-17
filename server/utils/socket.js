@@ -1,4 +1,3 @@
-// socket.js
 const { Server } = require("socket.io");
 
 let io;
@@ -6,29 +5,27 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*", // You can restrict this in production
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });
 
   io.on("connection", (socket) => {
-    console.log("🟢 New client connected:", socket.id);
+    console.log("🟢 Client connected:", socket.id);
 
-    socket.on("joinTask", ({ taskId, userId }) => {
-      const roomName = taskId;
-      socket.join(roomName);
-      console.log(`${userId} joined task room ${roomName}`);
+    socket.on("joinUserRoom", (userId) => {
+      socket.join(userId);
+      console.log(`User ${userId} joined their private room`);
     });
 
-    socket.on("sendMessage", ({ taskId, sender, text, image }) => {
+    socket.on("sendMessage", ({ receiverId, sender, text, image }) => {
       const messageData = {
-        taskId,
         sender,
         text,
         image,
         timestamp: new Date(),
       };
-      io.to(taskId).emit("receiveMessage", messageData);
+      io.to(receiverId).emit("receiveMessage", messageData);
     });
 
     socket.on("disconnect", () => {
