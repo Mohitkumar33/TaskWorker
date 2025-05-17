@@ -1,11 +1,10 @@
 const express = require("express");
 
-
 const {
   createMessage,
   getMessages,
   getChatSummary,
-  markMessagesAsRead
+  markMessagesAsRead,
 } = require("../controllers/messageController");
 const {
   authMiddleware,
@@ -36,7 +35,6 @@ router.get(
 router.get("/summary/:userId", authMiddleware, getChatSummary);
 
 //mark message as read
-router.put('/:taskId/read', authMiddleware, markMessagesAsRead);
-
+router.put("/:taskId/read", authMiddleware, markMessagesAsRead);
 
 module.exports = router;
