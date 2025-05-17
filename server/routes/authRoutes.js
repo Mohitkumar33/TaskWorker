@@ -33,7 +33,7 @@ router.post(
 
     const { name, email, password, role, skills, fcmToken } = req.body;
     let location;
-    if (location) JSON.parse(req.body.location);
+    if (req.body.location) JSON.parse(req.body.location);
     try {
       let user = await User.findOne({ email });
       if (user) return res.status(400).json({ msg: "User already exists" });
