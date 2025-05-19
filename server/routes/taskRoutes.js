@@ -21,6 +21,7 @@ const {
   getTaskData,
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
+const Task = require("../models/Task");
 
 const router = express.Router();
 
