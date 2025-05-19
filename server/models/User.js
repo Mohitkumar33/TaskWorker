@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema(
     },
     profilePhoto: { type: String },
     location: {
-      address: {
+      country: {
         type: String,
       },
       lat: {
