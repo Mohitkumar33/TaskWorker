@@ -22,12 +22,12 @@ const createMessage = async (req, res) => {
     if (io) {
       io.to(receiverId).emit("receiveMessage", {
         sender: message.sender,
+
         receiver: message.receiver,
         text: message.text,
         image: message.image,
         timestamp: message.timestamp,
       });
-
     }
     io.to(senderId).emit("receiveMessage", {
       sender: message.sender,
