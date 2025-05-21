@@ -33,7 +33,17 @@ router.post(
 
     const { name, email, password, role, skills, fcmToken } = req.body;
     let location;
-    if (req.body.location) JSON.parse(req.body.location);
+    // if (req.body.location) JSON.parse(req.body.location);
+    try {
+      if (req.body.location) {
+        location =
+          typeof req.body.location === "string"
+            ? JSON.parse(req.body.location)
+            : req.body.location;
+      }
+    } catch (err) {
+      return res.status(400).json({ msg: "Invalid location format" });
+    }
     try {
       let user = await User.findOne({ email });
       if (user) return res.status(400).json({ msg: "User already exists" });
