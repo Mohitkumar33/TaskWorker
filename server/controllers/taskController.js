@@ -113,7 +113,9 @@ const getTaskData = async (req, res) => {
     const task = await Task.findById(req.params.id)
       .populate("user", "name email")
       .populate("comments.user")
-      .populate("comments.replies.user");
+      .populate("comments.replies.user")
+      .populate("bids.provider")
+      .populate("assignedProvider");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }

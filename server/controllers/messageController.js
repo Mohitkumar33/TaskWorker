@@ -22,11 +22,20 @@ const createMessage = async (req, res) => {
     if (io) {
       io.to(receiverId).emit("receiveMessage", {
         sender: message.sender,
+        receiver: message.receiver,
         text: message.text,
         image: message.image,
         timestamp: message.timestamp,
       });
+
     }
+    io.to(senderId).emit("receiveMessage", {
+      sender: message.sender,
+      receiver: receiverId,
+      text: message.text,
+      image: message.image,
+      timestamp: message.timestamp,
+    });
 
     // Optional: Push notification
     const receiver = await User.findById(receiverId);
@@ -37,7 +46,9 @@ const createMessage = async (req, res) => {
         receiver.fcmToken,
         `New message from ${sender.name}`,
         message.text,
-        { type: "chat" }
+        { type: "chat",
+          senderId: senderId
+        }
       );
     }
 
@@ -53,6 +64,15 @@ const getMessagesWithUser = async (req, res) => {
   const otherUserId = req.params.otherUserId;
 
   try {
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: userId,
+        read: false,
+      },
+      { $set: { read: true } }
+    );
+
     const messages = await Message.find({
       $or: [
         { sender: userId, receiver: otherUserId },
@@ -91,6 +111,20 @@ const getChatSummary = async (req, res) => {
           lastMessage: { $first: "$text" },
           lastImage: { $first: "$image" },
           lastTimestamp: { $first: "$timestamp" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$receiver", userId] },
+                    { $eq: ["$read", false] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
         },
       },
     ]);
@@ -105,6 +139,7 @@ const getChatSummary = async (req, res) => {
           lastMessage: msg.lastMessage,
           lastImage: msg.lastImage,
           lastTimestamp: msg.lastTimestamp,
+          unreadCount: msg.unreadCount || 0
         };
       })
     );
