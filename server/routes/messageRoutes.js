@@ -1,42 +1,21 @@
 const express = require("express");
-
-
+const router = express.Router();
 const {
   createMessage,
-  getMessages,
+  getMessagesWithUser,
   getChatSummary,
-  markMessagesAsRead
 } = require("../controllers/messageController");
-const {
-  authMiddleware,
-  authorizeRoles,
-} = require("../middlewares/authMiddleware");
+
+const { authMiddleware } = require("../middlewares/authMiddleware");
 const messageUpload = require("../middlewares/messageUpload");
 
-const router = express.Router();
+// Send message
+router.post("/", authMiddleware, messageUpload.single("image"), createMessage);
 
-// POST message (with optional image)
-router.post(
-  "/:taskId",
-  authMiddleware,
-  //   authorizeRoles("user"),
-  messageUpload.single("image"),
-  createMessage
-);
+// Get chat history with another user
+router.get("/:otherUserId", authMiddleware, getMessagesWithUser);
 
-// GET messages for a task
-router.get(
-  "/:taskId",
-  authMiddleware,
-  //  authorizeRoles("user"),
-  getMessages
-);
-
-//Get summary chat
-router.get("/summary/:userId", authMiddleware, getChatSummary);
-
-//mark message as read
-router.put('/:taskId/read', authMiddleware, markMessagesAsRead);
-
+// Get chat summaries
+router.get("/summary/me", authMiddleware, getChatSummary);
 
 module.exports = router;

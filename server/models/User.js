@@ -13,9 +13,15 @@ const UserSchema = new mongoose.Schema(
     },
     profilePhoto: { type: String },
     location: {
-      country: { type: String },           
-      lat: { type: Number },               
-      lng: { type: Number },
+      address: {
+        type: String,
+      },
+      lat: {
+        type: Number,
+      },
+      lng: {
+        type: Number,
+      },
     },
     skills: [{ type: String }], // Only applicable for providers
     isVerified: { type: Boolean, default: false },
@@ -27,10 +33,10 @@ const UserSchema = new mongoose.Schema(
     recommendations: { type: Number, default: 0 },
     rank: {
       type: String,
-      enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
-      default: 'Bronze',
+      enum: ["Bronze", "Silver", "Gold", "Platinum"],
+      default: "Bronze",
     },
-    fcmToken: { type: String},
+    fcmToken: { type: String },
   },
   { timestamps: true }
 );

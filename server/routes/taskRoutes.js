@@ -17,7 +17,8 @@ const {
   updateTaskDetails,
   createComment,
   replyToComment,
-  getTasksWeb
+  getTasksWeb,
+  getTaskData,
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 
@@ -34,6 +35,7 @@ router.post(
 router.get("/", authMiddleware, getTasks); // Get all tasks
 router.get("/alltasks/web", authMiddleware, getTasksWeb); // Get all tasks for web
 router.get("/:id", authMiddleware, getTask); // Get task by ID
+router.get("/:id/data", authMiddleware, getTaskData); // Get task by ID
 router.put(
   "/:id/status",
   authMiddleware,
@@ -76,16 +78,18 @@ router.put(
 );
 // GET /api/provider/:providerId
 // get review for provider
-router.get('/provider/:providerId', async (req, res) => {
+router.get("/provider/:providerId", async (req, res) => {
   try {
     const tasks = await Task.find({
       assignedProvider: req.params.providerId,
-      status: 'Completed',
-      review: { $exists: true }
-    })
-      .populate('user', 'name email profilePhoto location skills isVerified role averageRating totalReviews');
+      status: "Completed",
+      review: { $exists: true },
+    }).populate(
+      "user",
+      "name email profilePhoto location skills isVerified role averageRating totalReviews"
+    );
 
-    const reviews = tasks.map(task => ({
+    const reviews = tasks.map((task) => ({
       rating: task.review.rating,
       comment: task.review.comment,
       reviewer: task.user, // the task poster becomes the reviewer
@@ -94,16 +98,12 @@ router.get('/provider/:providerId', async (req, res) => {
     res.json(reviews);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Failed to fetch reviews' });
+    res.status(500).json({ msg: "Failed to fetch reviews" });
   }
 });
 
 // POST Comment
-router.post(
-  "/:taskId/comment",
-  authMiddleware,
-  createComment
-);
+router.post("/:taskId/comment", authMiddleware, createComment);
 
 // POST Reply to a Comment
 router.post(

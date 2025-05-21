@@ -34,11 +34,9 @@ const createTask = async (req, res) => {
     // Validate location type
     if (location.type === "physical") {
       if (!location.address || location.lat == null || location.lng == null) {
-        return res
-          .status(400)
-          .json({
-            message: "Physical location requires address, lat, and lng",
-          });
+        return res.status(400).json({
+          message: "Physical location requires address, lat, and lng",
+        });
       }
     } else if (location.type !== "remote") {
       return res
@@ -99,6 +97,23 @@ const getTask = async (req, res) => {
       "user",
       "name email"
     );
+    if (!task) {
+      return res.status(404).json({ msg: "Task not found" });
+    }
+    res.json(task);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Server error");
+  }
+};
+
+// Get a single task, users, providers, comments related to a task
+const getTaskData = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("comments.user")
+      .populate("comments.replies.user");
     if (!task) {
       return res.status(404).json({ msg: "Task not found" });
     }
@@ -507,6 +522,7 @@ module.exports = {
   createTask,
   getTasks,
   getTask,
+  getTaskData,
   updateTaskStatus,
   deleteTask,
   bidOnTask,
