@@ -94,6 +94,7 @@ router.get("/provider/:providerId", async (req, res) => {
       rating: task.review.rating,
       comment: task.review.comment,
       reviewer: task.user, // the task poster becomes the reviewer
+      task: { title: task.title },
     }));
 
     res.json(reviews);
