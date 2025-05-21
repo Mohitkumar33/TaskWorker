@@ -33,17 +33,7 @@ router.post(
 
     const { name, email, password, role, skills, fcmToken } = req.body;
     let location;
-    // if (req.body.location) JSON.parse(req.body.location);
-    try {
-      if (req.body.location) {
-        location =
-          typeof req.body.location === "string"
-            ? JSON.parse(req.body.location)
-            : req.body.location;
-      }
-    } catch (err) {
-      return res.status(400).json({ msg: "Invalid location format" });
-    }
+    if (req.body.location) location = JSON.parse(req.body.location);
     try {
       let user = await User.findOne({ email });
       if (user) return res.status(400).json({ msg: "User already exists" });
@@ -126,23 +116,33 @@ router.put(
       if (!user) return res.status(404).json({ msg: "User not found" });
 
       const { name, skills } = req.body;
-      const location = {
-        country: req.body["location.country"],
-        lat: req.body["location.lat"]
-          ? parseFloat(req.body["location.lat"])
-          : undefined,
-        lng: req.body["location.lng"]
-          ? parseFloat(req.body["location.lng"])
-          : undefined,
-      };
 
+      // Update name if sent
       if (name) user.name = name;
-      if (location.country) {
-        user.location = location;
-      }
+
+      // Update skills if user is a provider and skills are provided
       if (skills && user.role === "provider") {
         user.skills = skills.split(",").map((s) => s.trim());
       }
+
+      // Update location if provided as JSON string
+      if (req.body.location) {
+        try {
+          const location = JSON.parse(req.body.location);
+
+          // Only update provided location fields
+          user.location = {
+            ...user.location,
+            ...(location.country && { country: location.country }),
+            ...(location.lat !== undefined && { lat: parseFloat(location.lat) }),
+            ...(location.lng !== undefined && { lng: parseFloat(location.lng) }),
+          };
+        } catch (err) {
+          return res.status(400).json({ msg: "Invalid location format" });
+        }
+      }
+
+      // Update profile photo if a new one is uploaded
       if (req.file?.path) {
         user.profilePhoto = req.file.path;
       }
