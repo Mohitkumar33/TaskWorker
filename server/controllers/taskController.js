@@ -402,15 +402,17 @@ const createComment = async (req, res) => {
       return res.status(404).json({ msg: "Poster not found" });
     }
 
-    if (poster.fcmToken) {
-      await sendNotification(
-        poster.fcmToken,
-        "New comment",
-        `${commenter?.name ?? "Someone"} commented on your task.`,
-        { taskId: task._id.toString(), type: "task" }
-      );
-    } else {
-      console.warn("No FCM token found for accepted provider.");
+    if (poster._id.toString() !== req.user.id.toString()){
+      if (poster.fcmToken) {
+        await sendNotification(
+          poster.fcmToken,
+          "New comment",
+          `${commenter?.name ?? "Someone"} commented on your task.`,
+          { taskId: task._id.toString(), type: "task" }
+        );
+      } else {
+        console.warn("No FCM token found for accepted provider.");
+      }
     }
 
     res.status(201).json(newComment);
