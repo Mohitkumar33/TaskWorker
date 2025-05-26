@@ -2,12 +2,82 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const upload = require("../middlewares/upload");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { sendRegistrationEmail } = require("../utils/mail");
 
 const router = express.Router();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// @route   POST /api/auth/google
+// @desc    Login or register user via Google
+// @access  Public
+router.post("/google", async (req, res) => {
+  const { tokenId, fcmToken, role, location } = req.body;
+
+  try {
+    // Verify token with Google
+    const ticket = await client.verifyIdToken({
+      idToken: tokenId,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Register new user
+      user = new User({
+        name,
+        email,
+        role: role || "user",
+        profilePhoto: picture,
+        googleId,
+        fcmToken,
+        location: location || {},
+        isVerified: false,
+      });
+
+      await user.save();
+    }
+
+    // Generate your own JWT
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        name: user.name,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePhoto: user.profilePhoto,
+        location: user.location,
+        skills: user.skills,
+        isVerified: user.isVerified,
+        averageRating: user.averageRating,
+        totalReviews: user.totalReviews,
+      },
+    });
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(401).json({ msg: "Invalid Google token" });
+  }
+});
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -189,6 +259,11 @@ router.post(
 
     try {
       const user = await User.findOne({ email });
+      if (user.googleId && !user.password) {
+        return res.status(400).json({
+          msg: "You registered with Google. Please sign in with Google or set a password.",
+        });
+      }
       if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
       const isMatch = await bcrypt.compare(password, user.password);
