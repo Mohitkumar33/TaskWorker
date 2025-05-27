@@ -6,6 +6,7 @@ const User = require("../models/User");
 const upload = require("../middlewares/upload");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { sendRegistrationEmail } = require("../utils/mail");
+const { googleLogin } = require('../controllers/googleLoginController');
 
 const router = express.Router();
 
@@ -222,5 +223,6 @@ router.post(
     }
   }
 );
+router.post('/google', googleLogin);
 
 module.exports = router;
