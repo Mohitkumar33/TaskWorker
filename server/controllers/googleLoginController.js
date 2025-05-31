@@ -29,7 +29,7 @@ exports.googleLogin = async (req, res) => {
             await user.save();
         }
 
-    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role, name: user.name }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user });
   } catch (err) {
     console.error('Token verification failed:', err);
