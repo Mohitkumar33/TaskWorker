@@ -69,7 +69,7 @@ const createTask = async (req, res) => {
 // Get all tasks
 const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().populate("user", "name email"); // Populate user details
+    const tasks = await Task.find().populate("user", "name email profilePhoto"); // Populate user details
     res.json(tasks);
   } catch (error) {
     console.error(error.message);
@@ -125,6 +125,34 @@ const getTaskData = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+// Get a single task, users, providers, comments related to a task for react native app, this api give more details about comments, bids, and replies of the comments
+const getTaskReactNativeApp = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id)
+      .populate('user', 'name email') // task poster info
+      .populate({
+        path: 'bids.provider',
+        select: 'name profilePhoto averageRating', // user fields you want in bids
+      })
+      .populate({
+        path: 'comments.user',
+        select: 'name profilePhoto',
+      })
+      .populate({
+        path: 'comments.replies.user',
+        select: 'name profilePhoto',
+      });
+
+    if (!task) {
+      return res.status(404).json({ msg: 'Task not found' });
+    }
+    res.json(task);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server error');
+  }
+};
+
 
 // Update task status (active, completed, cancelled)
 const updateTaskStatus = async (req, res) => {
@@ -174,8 +202,7 @@ const deleteTask = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
-// Bid on a task
+// New Bid on task for react native app
 const bidOnTask = async (req, res) => {
   const { price, estimatedTime, comment } = req.body;
 
@@ -192,16 +219,30 @@ const bidOnTask = async (req, res) => {
     const provider = await User.findById(req.user.id).select("name");
     if (!provider) return res.status(404).json({ msg: "Provider not found" });
 
-    // Add the bid to the task's bids array
-    task.bids.push({
-      provider: req.user.id,
-      price,
-      comment: comment || "",
-      estimatedTime,
-    });
+    // Check if the user already has a bid
+    const existingBidIndex = task.bids.findIndex(
+      (bid) => bid.provider.toString() === req.user.id
+    );
+
+    if (existingBidIndex !== -1) {
+      // Update the existing bid
+      task.bids[existingBidIndex].price = price;
+      task.bids[existingBidIndex].estimatedTime = estimatedTime;
+      task.bids[existingBidIndex].comment = comment || "";
+      task.bids[existingBidIndex].date = new Date();
+    } else {
+      // Add new bid
+      task.bids.push({
+        provider: req.user.id,
+        price,
+        comment: comment || "",
+        estimatedTime,
+      });
+    }
 
     await task.save();
-    //push notification to task poster
+
+    // Push notification to task poster
     if (task.user.fcmToken) {
       await sendNotification(
         task.user.fcmToken,
@@ -212,13 +253,59 @@ const bidOnTask = async (req, res) => {
     } else {
       console.warn("No FCM token found for user.");
     }
-    // sendBidNotificationEmail(task.user.email, task.title, req.user.name); // Send email notification to the task poster
+
     res.json(task);
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Server error");
   }
 };
+
+
+// Bid on a task
+// const bidOnTask = async (req, res) => {
+//   const { price, estimatedTime, comment } = req.body;
+
+//   try {
+//     const task = await Task.findById(req.params.id).populate(
+//       "user",
+//       "email fcmToken"
+//     );
+//     if (!task) {
+//       return res.status(404).json({ msg: "Task not found" });
+//     }
+
+//     // Find provider's name
+//     const provider = await User.findById(req.user.id).select("name");
+//     if (!provider) return res.status(404).json({ msg: "Provider not found" });
+
+//     // Add the bid to the task's bids array
+//     task.bids.push({
+//       provider: req.user.id,
+//       price,
+//       comment: comment || "",
+//       estimatedTime,
+//     });
+
+//     await task.save();
+//     //push notification to task poster
+//     if (task.user.fcmToken) {
+//       await sendNotification(
+//         task.user.fcmToken,
+//         "New Offer Received",
+//         `${provider.name} has offered $${price} for your task.`,
+//         { taskId: task._id.toString(), type: "task" }
+//       );
+//     } else {
+//       console.warn("No FCM token found for user.");
+//     }
+//     // sendBidNotificationEmail(task.user.email, task.title, req.user.name); // Send email notification to the task poster
+//     res.json(task);
+//   } catch (error) {
+//     console.error(error.message);
+//     res.status(500).send("Server error");
+//   }
+// };
 
 // Accept a bid and assign a provider to the task, updating the task status to "In Progress"
 const acceptBid = async (req, res) => {
@@ -402,7 +489,7 @@ const createComment = async (req, res) => {
       return res.status(404).json({ msg: "Poster not found" });
     }
 
-    if (poster._id.toString() !== req.user.id.toString()){
+    if (poster._id.toString() !== req.user.id.toString()) {
       if (poster.fcmToken) {
         await sendNotification(
           poster.fcmToken,
@@ -522,6 +609,36 @@ const updateTaskDetails = async (req, res) => {
   }
 };
 
+// Get all tasks posted BY the logged‑in user (role: user or admin)
+const getMyPostedTasks = async (req, res) => {
+  try {
+    // Only the requester’s own ID is trusted (taken from JWT)
+    const tasks = await Task.find({ user: req.user.id })
+      .populate("assignedProvider", "name email profilePhoto")
+      .sort({ createdAt: -1 });
+
+    res.json(tasks);
+  } catch (err) {
+    console.error("getMyPostedTasks error:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// Get all tasks ASSIGNED to the logged‑in provider (role: provider or admin)
+const getMyAssignedTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ assignedProvider: req.user.id })
+      .populate("user", "name email profilePhoto")
+      .sort({ createdAt: -1 });
+
+    res.json(tasks);
+  } catch (err) {
+    console.error("getMyAssignedTasks error:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+
 module.exports = {
   createTask,
   getTasks,
@@ -536,4 +653,7 @@ module.exports = {
   createComment,
   replyToComment,
   getTasksWeb,
+  getMyPostedTasks,
+  getMyAssignedTasks,
+  getTaskReactNativeApp
 };

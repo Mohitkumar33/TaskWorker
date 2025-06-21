@@ -19,6 +19,9 @@ const {
   replyToComment,
   getTasksWeb,
   getTaskData,
+  getMyPostedTasks,
+  getMyAssignedTasks,
+  getTaskReactNativeApp,
 } = require("../controllers/taskController");
 const taskUpload = require("../middlewares/taskUpload");
 const Task = require("../models/Task");
@@ -37,6 +40,7 @@ router.get("/", authMiddleware, getTasks); // Get all tasks
 router.get("/alltasks/web", authMiddleware, getTasksWeb); // Get all tasks for web
 router.get("/:id", authMiddleware, getTask); // Get task by ID
 router.get("/:id/data", authMiddleware, getTaskData); // Get task by ID
+router.get("/:id/data/special/native", authMiddleware, getTaskReactNativeApp); // Get task by ID for react native app
 router.put(
   "/:id/status",
   authMiddleware,
@@ -112,6 +116,22 @@ router.post(
   "/:taskId/comment/:commentId/reply",
   authMiddleware,
   replyToComment
+);
+
+// 🔹 “My tasks” for normal users (tasks they posted)
+router.get(
+  "/me/posted",
+  authMiddleware,
+  authorizeRoles("user", "admin"),
+  getMyPostedTasks
+);
+
+// 🔹 “My tasks” for providers (tasks assigned to them)
+router.get(
+  "/me/assigned",
+  authMiddleware,
+  authorizeRoles("provider", "admin"),
+  getMyAssignedTasks
 );
 
 module.exports = router;

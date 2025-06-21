@@ -95,7 +95,9 @@ const changeUserRank = async (req, res) => {
 // Get all tasks
 const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().populate("user", "name email");
+    const tasks = await Task.find()
+      .sort({ createdAt: -1 })
+      .populate("user", "name email");
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
